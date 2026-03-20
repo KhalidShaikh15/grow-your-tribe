@@ -12,8 +12,13 @@ export default {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      sans: ['DM Sans', 'system-ui', 'sans-serif'],
+      mono: ['DM Mono', 'monospace'],
+    },
     extend: {
       colors: {
+        success: "hsl(var(--success))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
