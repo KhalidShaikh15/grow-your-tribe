@@ -111,45 +111,87 @@ const Index = () => {
 
       {/* Membership section */}
       <section id="membership" className="px-6 md:px-12 py-20">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-3">
-            One Membership. Unlimited Possibilities.
+            Choose Your Membership
           </h2>
           <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            For a one-time fee of ₹499, become a lifetime member of the BANBRO'SS INDIA community. This is a long-term program focused on community growth and potential future benefits based on platform performance.
+            Join the BANBRO'SS INDIA community with a plan that fits you. Both plans offer lifetime access to our long-term growth program.
           </p>
 
-          <div className="card-hover bg-card rounded-2xl border p-8 md:p-10 max-w-lg mx-auto shadow-sm">
-            <div className="text-center mb-8">
-              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-2">
-                Lifetime Membership
-              </p>
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-extrabold text-foreground">₹499</span>
-                <span className="text-muted-foreground">/one-time</span>
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto items-start">
+            {/* Basic Plan */}
+            <div className="card-hover bg-card rounded-2xl border p-8 shadow-sm">
+              <div className="text-center mb-8">
+                <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-2">
+                  Basic Membership
+                </p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-extrabold text-foreground">₹499</span>
+                  <span className="text-muted-foreground">/one-time</span>
+                </div>
               </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Full platform access",
+                  "Community participation",
+                  "Regular updates & reports",
+                  "Long-term participation benefits",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-foreground">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-primary" />
+                    </span>
+                    <span className="text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button variant="outline" size="lg" className="w-full h-12 rounded-xl" asChild>
+                <Link to="/subscribe?plan=basic">Join Basic — ₹499</Link>
+              </Button>
             </div>
 
-            <ul className="space-y-3 mb-8">
-              {[
-                "Full platform access",
-                "Community membership",
-                "Long-term participation benefits",
-                "Regular updates & reports",
-                "Priority communication",
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-3 text-foreground">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-3 h-3 text-primary" />
-                  </span>
-                  <span className="text-sm">{f}</span>
-                </li>
-              ))}
-            </ul>
+            {/* Premium Plan */}
+            <div className="card-hover bg-card rounded-2xl border-2 border-primary p-8 shadow-md relative md:scale-[1.03] origin-top">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                <span className="bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-4 py-1 rounded-full">
+                  Most Popular
+                </span>
+              </div>
 
-            <Button variant="hero" size="lg" className="w-full h-12 rounded-xl" asChild>
-              <Link to="/subscribe">Join Now — ₹499</Link>
-            </Button>
+              <div className="text-center mb-8 mt-2">
+                <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-2">
+                  Premium Membership
+                </p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-extrabold text-foreground">₹999</span>
+                  <span className="text-muted-foreground">/one-time</span>
+                </div>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Full platform access",
+                  "Community participation",
+                  "Priority access & communication",
+                  "Exclusive member content",
+                  "Potential future benefits based on performance",
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-foreground">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-primary" />
+                    </span>
+                    <span className="text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button variant="hero" size="lg" className="w-full h-12 rounded-xl" asChild>
+                <Link to="/subscribe?plan=premium">Join Premium — ₹999</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
