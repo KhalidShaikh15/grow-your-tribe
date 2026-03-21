@@ -19,8 +19,9 @@ const Subscribe = () => {
   const [form, setForm] = useState<FormData>({
     name: "", email: "", mobile: "", age: "", gender: "", address: "",
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<Partial<FormData & { terms: string }>>({});
 
   const update = (field: keyof FormData, value: string) => {
     setForm((p) => ({ ...p, [field]: value }));
@@ -28,13 +29,14 @@ const Subscribe = () => {
   };
 
   const validate = (): boolean => {
-    const e: Partial<FormData> = {};
+    const e: Partial<FormData & { terms: string }> = {};
     if (!form.name.trim()) e.name = "Name is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Valid email required";
     if (!/^\d{10}$/.test(form.mobile.replace(/\s/g, ""))) e.mobile = "10-digit mobile number required";
     if (!form.age || +form.age < 13 || +form.age > 120) e.age = "Valid age required";
     if (!form.gender) e.gender = "Select gender";
     if (!form.address.trim()) e.address = "Address required";
+    if (!termsAccepted) e.terms = "You must accept the terms and conditions";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -44,11 +46,10 @@ const Subscribe = () => {
     if (!validate()) return;
 
     setProcessing(true);
-    // Simulate payment processing
     await new Promise((r) => setTimeout(r, 2000));
     setProcessing(false);
 
-    navigate("/confirmation", { state: { subscriber: { ...form, id: "sub_" + Date.now(), subscribedAt: new Date().toISOString() } } });
+    navigate("/confirmation", { state: { subscriber: { ...form, id: "BAN_" + Date.now(), subscribedAt: new Date().toISOString() } } });
   };
 
   return (
@@ -57,13 +58,18 @@ const Subscribe = () => {
         <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <span className="font-bold text-lg text-foreground">Subscribe</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-xs">B</span>
+          </div>
+          <span className="font-bold text-lg text-foreground">Join BANBRO'SS INDIA</span>
+        </div>
       </nav>
 
       <div className="max-w-lg mx-auto px-6 py-12">
         <div className="fade-up mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Complete your subscription</h1>
-          <p className="text-muted-foreground">Fill in your details below. Total: <span className="font-semibold text-foreground">₹499</span></p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Complete your membership</h1>
+          <p className="text-muted-foreground">Fill in your details below. One-time fee: <span className="font-semibold text-foreground">₹499</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="fade-up fade-up-delay-1 space-y-5">
@@ -121,9 +127,28 @@ const Subscribe = () => {
             {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
           </div>
 
+          {/* Terms checkbox */}
+          <div className="bg-secondary/50 rounded-xl p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => {
+                  setTermsAccepted(e.target.checked);
+                  if (errors.terms) setErrors((p) => ({ ...p, terms: undefined }));
+                }}
+                className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-muted-foreground leading-relaxed">
+                I accept the <a href="#" className="text-primary underline">Terms and Conditions</a>. I understand that this is a long-term program (5–7 year lock-in), participation is voluntary, there are no guaranteed returns, and benefits depend on platform performance.
+              </span>
+            </label>
+            {errors.terms && <p className="text-destructive text-xs mt-2 ml-7">{errors.terms}</p>}
+          </div>
+
           <div className="pt-4 border-t">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-muted-foreground">Membership Plan</span>
+              <span className="text-sm text-muted-foreground">Membership Fee</span>
               <span className="font-semibold text-foreground">₹499</span>
             </div>
             <Button variant="hero" size="lg" type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
@@ -133,7 +158,7 @@ const Subscribe = () => {
                   Processing Payment...
                 </>
               ) : (
-                "Pay ₹499 & Subscribe"
+                "Pay ₹499 & Join"
               )}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-3">

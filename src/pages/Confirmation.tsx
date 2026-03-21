@@ -15,20 +15,17 @@ const Confirmation = () => {
       day: "2-digit", month: "long", year: "numeric",
     });
 
-    // Header
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("SubsClub", 20, 25);
+    doc.text("BANBRO'SS INDIA", 20, 25);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(120);
-    doc.text("Subscription Receipt", 20, 33);
+    doc.text("Membership Receipt", 20, 33);
 
-    // Divider
     doc.setDrawColor(220);
     doc.line(20, 38, 190, 38);
 
-    // Details
     doc.setTextColor(40);
     doc.setFontSize(11);
     const fields = [
@@ -51,7 +48,6 @@ const Confirmation = () => {
       y += 9;
     });
 
-    // Amount
     doc.line(20, y + 2, 190, y + 2);
     y += 14;
     doc.setFontSize(13);
@@ -59,14 +55,13 @@ const Confirmation = () => {
     doc.text("Amount Paid", 20, y);
     doc.text("\u20B9499", 170, y, { align: "right" });
 
-    // Footer
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(150);
     doc.text("This is a computer-generated receipt and does not require a signature.", 20, 270);
-    doc.text("SubsClub \u00A9 " + new Date().getFullYear(), 20, 276);
+    doc.text("BANBRO'SS INDIA \u00A9 " + new Date().getFullYear(), 20, 276);
 
-    doc.save(`SubsClub_Receipt_${subscriber.id}.pdf`);
+    doc.save(`BANBROSS_Receipt_${subscriber.id}.pdf`);
   };
 
   return (
@@ -78,10 +73,10 @@ const Confirmation = () => {
         </div>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">
-          You're in!
+          Welcome to BANBRO'SS INDIA!
         </h1>
         <p className="text-muted-foreground mb-8">
-          Welcome to SubsClub, {subscriber.name.split(" ")[0]}. Your subscription is confirmed.
+          Congratulations, {subscriber.name.split(" ")[0]}! Your membership is confirmed.
         </p>
 
         <div className="bg-card border rounded-xl p-5 mb-8 text-left space-y-2">

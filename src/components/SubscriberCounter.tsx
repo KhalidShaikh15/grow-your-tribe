@@ -9,17 +9,13 @@ export function SubscriberCounter() {
     const target = CURRENT_SUBSCRIBERS;
     const duration = 2000;
     const steps = 60;
-    const increment = target / steps;
-    let current = 0;
     let step = 0;
 
     const timer = setInterval(() => {
       step++;
       const progress = step / steps;
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
-      current = Math.floor(eased * target);
-      setCount(current);
+      setCount(Math.floor(eased * target));
 
       if (step >= steps) {
         setCount(target);
@@ -32,10 +28,10 @@ export function SubscriberCounter() {
 
   return (
     <div className="fade-up w-full max-w-xl mx-auto">
-      <p className="text-muted-foreground text-sm font-medium mb-2 uppercase tracking-wide">
-        Live subscriber count
+      <p className="text-muted-foreground text-sm font-medium mb-3 uppercase tracking-wide">
+        Live member count
       </p>
-      <div className="flex items-baseline gap-2 mb-4">
+      <div className="flex items-baseline justify-center gap-2 mb-4">
         <span className="counter-text text-5xl md:text-6xl font-bold text-foreground">
           {formatIndianNumber(count)}
         </span>
@@ -44,7 +40,6 @@ export function SubscriberCounter() {
         </span>
       </div>
 
-      {/* Progress bar */}
       <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
         <div
           className="progress-fill h-full rounded-full"
