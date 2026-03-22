@@ -30,9 +30,7 @@ const Index = () => {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">B</span>
-          </div>
+          <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-10 h-10 object-contain" />
           <span className="font-bold text-lg text-foreground tracking-tight">BANBRO'SS INDIA</span>
         </div>
 
