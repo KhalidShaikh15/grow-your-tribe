@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users, Shield, Zap, CheckCircle2, AlertTriangle, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import banbrossLogo from "@/assets/banbross_logo.png";
 import { useState } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { FAQSection } from "@/components/FAQSection";
