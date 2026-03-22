@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users, Shield, Zap, CheckCircle2, AlertTriangle, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import banbrossLogo from "@/assets/banbross_logo.png";
 import { useState } from "react";
 import { HeroSection } from "@/components/HeroSection";
 import { FAQSection } from "@/components/FAQSection";
@@ -29,9 +30,7 @@ const Index = () => {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">B</span>
-          </div>
+          <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-10 h-10 object-contain" />
           <span className="font-bold text-lg text-foreground tracking-tight">BANBRO'SS INDIA</span>
         </div>
 
@@ -197,9 +196,7 @@ const Index = () => {
       <footer className="px-6 md:px-12 py-8 border-t">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">B</span>
-            </div>
+            <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-8 h-8 object-contain" />
             <span className="font-bold text-sm text-foreground">BANBRO'SS INDIA</span>
           </div>
           <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} BANBRO'SS INDIA. All rights reserved.</p>
