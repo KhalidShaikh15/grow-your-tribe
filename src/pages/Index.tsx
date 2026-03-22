@@ -196,9 +196,7 @@ const Index = () => {
       <footer className="px-6 md:px-12 py-8 border-t">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">B</span>
-            </div>
+            <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-8 h-8 object-contain" />
             <span className="font-bold text-sm text-foreground">BANBRO'SS INDIA</span>
           </div>
           <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} BANBRO'SS INDIA. All rights reserved.</p>
