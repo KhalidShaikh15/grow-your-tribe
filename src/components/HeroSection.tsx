@@ -39,9 +39,6 @@ export function HeroSection({ count }: { count: number }) {
           <h2 className="text-4xl font-bold">
             {count.toLocaleString()} / {goal.toLocaleString()}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {progress.toFixed(1)}% of goal reached
-          </p>
         </div>
 
         {/* ✅ PROGRESS BAR */}

@@ -7,6 +7,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import banbrossLogo from "@/assets/banbross_logo.png";
+import PageWrapper from "@/components/PageWrapper";
+
 
 interface FormData {
   name: string;
@@ -97,7 +99,7 @@ const Subscribe = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+     <PageWrapper>
       <nav className="flex items-center gap-4 px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -228,7 +230,8 @@ const Subscribe = () => {
           </Button>
         </form>
       </div>
-    </div>
+   </PageWrapper>
+    
   );
 };
 

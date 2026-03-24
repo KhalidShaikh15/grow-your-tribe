@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import PageWrapper from "@/components/PageWrapper";
 
 const Pending = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+    <PageWrapper>
+  <div className="flex items-center justify-center min-h-screen px-6">
       
       {/* ✅ Premium Card Container */}
       <div className="w-full max-w-md bg-card border rounded-2xl shadow-lg p-8 text-center">
@@ -33,6 +35,7 @@ const Pending = () => {
 
       </div>
     </div>
+    </PageWrapper>
   );
 };
 
