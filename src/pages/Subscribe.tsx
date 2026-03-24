@@ -24,8 +24,14 @@ const Subscribe = () => {
   const price = plan === "premium" ? 999 : 499;
 
   const [form, setForm] = useState<FormData>({
-    name: "", email: "", mobile: "", age: "", gender: "", address: "",
+    name: "",
+    email: "",
+    mobile: "",
+    age: "",
+    gender: "",
+    address: "",
   });
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData & { terms: string }>>({});
@@ -37,6 +43,7 @@ const Subscribe = () => {
 
   const validate = (): boolean => {
     const e: Partial<FormData & { terms: string }> = {};
+
     if (!form.name.trim()) e.name = "Name is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Valid email required";
     if (!/^\d{10}$/.test(form.mobile.replace(/\s/g, ""))) e.mobile = "10-digit mobile number required";
@@ -44,17 +51,20 @@ const Subscribe = () => {
     if (!form.gender) e.gender = "Select gender";
     if (!form.address.trim()) e.address = "Address required";
     if (!termsAccepted) e.terms = "You must accept the terms and conditions";
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validate()) return;
 
     setProcessing(true);
+
     try {
-      const docRef = await addDoc(collection(db, "subscribers"), {
+      const docRef = await addDoc(collection(db, "submissions"), {
         name: form.name.trim(),
         email: form.email.trim(),
         mobile: form.mobile.trim(),
@@ -64,25 +74,23 @@ const Subscribe = () => {
         plan,
         amount: price,
         status: "pending",
-        subscribedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
 
-      // Simulate payment delay
-      await new Promise((r) => setTimeout(r, 1500));
 
-      navigate("/confirmation", {
-        state: {
-          subscriber: {
-            ...form,
-            id: docRef.id,
-            plan,
-            amount: price,
-            subscribedAt: new Date().toISOString(),
-          },
-        },
-      });
+      navigate("/payment", {
+  state: {
+    subscriber: {
+      ...form,
+      id: docRef.id,
+      plan,
+      amount: price,
+    },
+  },
+});
     } catch (err) {
       console.error("Error saving subscriber:", err);
+      alert("Something went wrong. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -95,8 +103,8 @@ const Subscribe = () => {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
-          <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-7 h-7 object-contain" />
-          <span className="font-bold text-lg text-foreground">Join BANBRO'SS INDIA</span>
+          <img src={banbrossLogo} alt="BANBRO'S INDIA" className="w-7 h-7 object-contain" />
+          <span className="font-bold text-lg text-foreground">Join BANBRO'S INDIA</span>
         </div>
       </nav>
 
@@ -104,42 +112,69 @@ const Subscribe = () => {
         <div className="fade-up mb-8">
           <h1 className="text-2xl font-bold text-foreground mb-2">Complete your membership</h1>
           <p className="text-muted-foreground">
-            {plan === "premium" ? "Premium" : "Basic"} Membership — One-time fee: <span className="font-semibold text-foreground">₹{price}</span>
+            {plan === "premium" ? "Premium" : "Basic"} Membership — One-time fee:{" "}
+            <span className="font-semibold text-foreground">₹{price}</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="fade-up fade-up-delay-1 space-y-5">
           <div>
             <Label htmlFor="name">Full Name</Label>
-            <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Aarav Sharma" className="mt-1.5" />
+            <Input
+              id="name"
+              value={form.name}
+              onChange={(e) => update("name", e.target.value)}
+              
+              className="mt-1.5"
+            />
             {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
           </div>
 
           <div>
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="aarav@example.com" className="mt-1.5" />
+            <Input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
+              
+              className="mt-1.5"
+            />
             {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
           </div>
 
           <div>
             <Label htmlFor="mobile">Mobile Number</Label>
-            <Input id="mobile" value={form.mobile} onChange={(e) => update("mobile", e.target.value)} placeholder="9876543210" className="mt-1.5" />
+            <Input
+              id="mobile"
+              value={form.mobile}
+              onChange={(e) => update("mobile", e.target.value)}
+              className="mt-1.5"
+            />
             {errors.mobile && <p className="text-destructive text-xs mt-1">{errors.mobile}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="age">Age</Label>
-              <Input id="age" type="number" value={form.age} onChange={(e) => update("age", e.target.value)} placeholder="25" className="mt-1.5" />
+              <Input
+                id="age"
+                type="number"
+                value={form.age}
+                onChange={(e) => update("age", e.target.value)}
+                
+                className="mt-1.5"
+              />
               {errors.age && <p className="text-destructive text-xs mt-1">{errors.age}</p>}
             </div>
+
             <div>
               <Label htmlFor="gender">Gender</Label>
               <select
                 id="gender"
                 value={form.gender}
                 onChange={(e) => update("gender", e.target.value)}
-                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Select</option>
                 <option value="Male">Male</option>
@@ -158,7 +193,7 @@ const Subscribe = () => {
               onChange={(e) => update("address", e.target.value)}
               placeholder="123, Sector 15, Mumbai"
               rows={3}
-              className="mt-1.5 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              className="mt-1.5 w-full rounded-md border border-input px-3 py-2 text-sm resize-none"
             />
             {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
           </div>
@@ -172,34 +207,25 @@ const Subscribe = () => {
                   setTermsAccepted(e.target.checked);
                   if (errors.terms) setErrors((p) => ({ ...p, terms: undefined }));
                 }}
-                className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                className="mt-1 h-4 w-4"
               />
-              <span className="text-sm text-muted-foreground leading-relaxed">
-                I accept the <a href="#" className="text-primary underline">Terms and Conditions</a>. I understand that this is a long-term program (5–7 year lock-in), participation is voluntary, there are no guaranteed returns, and benefits depend on platform performance.
+              <span className="text-sm text-muted-foreground">
+                I accept the Terms and Conditions. No guaranteed returns. Long-term program (5–7 years).
               </span>
             </label>
             {errors.terms && <p className="text-destructive text-xs mt-2 ml-7">{errors.terms}</p>}
           </div>
 
-          <div className="pt-4 border-t">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-muted-foreground">Membership Fee</span>
-              <span className="font-semibold text-foreground">₹{price}</span>
-            </div>
-            <Button variant="hero" size="lg" type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
-              {processing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Processing Payment...
-                </>
-              ) : (
-                `Pay ₹${price} & Join`
-              )}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              Demo mode — no real payment will be charged
-            </p>
-          </div>
+          <Button type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
+            {processing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              `Join for ₹${price}`
+            )}
+          </Button>
         </form>
       </div>
     </div>

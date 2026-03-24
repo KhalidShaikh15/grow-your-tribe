@@ -1,184 +1,186 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Users, TrendingUp, Calendar, Loader2 } from "lucide-react";
-import { collection, getDocs, query, orderBy, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { SUBSCRIBER_GOAL, formatIndianNumber, type Subscriber } from "@/lib/mockData";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+import { Button } from "@/components/ui/button";
 
 const Admin = () => {
-  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ ONLY FETCH PENDING USERS
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [countSnap, docsSnap] = await Promise.all([
-          getCountFromServer(collection(db, "subscribers")),
-          getDocs(query(collection(db, "subscribers"), orderBy("subscribedAt", "desc"))),
-        ]);
+    const q = query(
+      collection(db, "submissions"),
+      where("status", "==", "pending")
+    );
 
-        setTotalCount(countSnap.data().count);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setSubscribers(data);
+      setLoading(false);
+    });
 
-        const subs: Subscriber[] = docsSnap.docs.map((doc) => {
-          const d = doc.data();
-          return {
-            id: doc.id,
-            name: d.name || "",
-            email: d.email || "",
-            mobile: d.mobile || "",
-            age: d.age || 0,
-            gender: d.gender || "",
-            address: d.address || "",
-            plan: d.plan || "basic",
-            amount: d.amount || 499,
-            subscribedAt: d.subscribedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-            status: d.status || "pending",
-          };
-        });
-        setSubscribers(subs);
-      } catch (err) {
-        console.error("Error fetching subscribers:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
+    return () => unsubscribe();
   }, []);
 
-  // Build daily growth from actual data
-  const dailyGrowth = (() => {
-    const map: Record<string, number> = {};
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
-      const key = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-      map[key] = 0;
-    }
-    subscribers.forEach((s) => {
-      const key = new Date(s.subscribedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-      if (key in map) map[key]++;
+  // ✅ FETCH ALL USERS (for stats)
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "submissions"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAllUsers(data);
     });
-    return Object.entries(map).map(([date, subscribers]) => ({ date, subscribers }));
-  })();
 
-  const avgDaily = dailyGrowth.length
-    ? Math.round(dailyGrowth.reduce((a, b) => a + b.subscribers, 0) / dailyGrowth.length)
-    : 0;
+    return () => unsubscribe();
+  }, []);
 
-  const stats = [
-    { label: "Total Subscribers", value: formatIndianNumber(totalCount), icon: Users, change: `${subscribers.length} loaded` },
-    { label: "Goal Progress", value: ((totalCount / SUBSCRIBER_GOAL) * 100).toFixed(1) + "%", icon: TrendingUp, change: `${formatIndianNumber(SUBSCRIBER_GOAL - totalCount)} remaining` },
-    { label: "Avg. Daily Signups", value: formatIndianNumber(avgDaily), icon: Calendar, change: "Last 30 days" },
-  ];
+  // ✅ STATS
+  const totalUsers = allUsers.length;
+  const approved = allUsers.filter(u => u.status === "approved").length;
+  const pending = allUsers.filter(u => u.status === "pending").length;
+
+  const basicPlan = allUsers.filter(u => u.plan === "basic").length;
+  const premiumPlan = allUsers.filter(u => u.plan === "premium").length;
+
+  // ✅ UPDATED FUNCTION (EMAIL + FIREBASE)
+  const updateStatus = async (user: any, status: string) => {
+    const confirmAction = window.confirm(
+      `Are you sure you want to ${status} this user?`
+    );
+
+    if (!confirmAction) return;
+
+    const ref = doc(db, "submissions", user.id);
+    await updateDoc(ref, { status });
+
+    // ✅ SEND EMAIL ONLY IF APPROVED
+    if (status === "approved") {
+      try {
+        await fetch("http://localhost:5000/send-receipt", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: user.name,
+            email: user.email,
+            plan: user.plan,
+            amount: user.amount,
+          }),
+        });
+      } catch (error) {
+        console.error("Email failed:", error);
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="flex items-center gap-4 px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
-        <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <span className="font-bold text-lg text-foreground">Admin Dashboard</span>
-      </nav>
+    <div className="min-h-screen bg-background px-6 py-10">
+      
+      <div className="max-w-6xl mx-auto">
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8">
-        {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          {stats.map((s, i) => (
-            <div key={s.label} className={`fade-up fade-up-delay-${i + 1} bg-card border rounded-xl p-5`}>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <s.icon className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-sm text-muted-foreground">{s.label}</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground counter-text">{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{s.change}</p>
-            </div>
-          ))}
+        <h1 className="text-2xl font-bold mb-6 text-center">
+          Admin Dashboard
+        </h1>
+
+        {/* ✅ STATS */}
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+
+          <div className="p-4 bg-card border rounded-xl text-center">
+            <p className="text-sm text-muted-foreground">Total Users</p>
+            <p className="text-xl font-bold">{totalUsers}</p>
+          </div>
+
+          <div className="p-4 bg-card border rounded-xl text-center">
+            <p className="text-sm text-muted-foreground">Approved</p>
+            <p className="text-xl font-bold text-green-600">{approved}</p>
+          </div>
+
+          <div className="p-4 bg-card border rounded-xl text-center">
+            <p className="text-sm text-muted-foreground">Pending</p>
+            <p className="text-xl font-bold text-yellow-600">{pending}</p>
+          </div>
+
+          <div className="p-4 bg-card border rounded-xl text-center">
+            <p className="text-sm text-muted-foreground">Plans</p>
+            <p className="text-sm font-medium">
+              ₹499: {basicPlan} | ₹999: {premiumPlan}
+            </p>
+          </div>
+
         </div>
 
-        {/* Chart */}
-        <div className="fade-up bg-card border rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Daily Signups — Last 30 Days</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyGrowth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} interval={4} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: 8,
-                    fontSize: 13,
-                  }}
-                />
-                <Bar dataKey="subscribers" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* ✅ TABLE */}
+        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
 
-        {/* Table */}
-        <div className="fade-up bg-card border rounded-xl overflow-hidden">
-          <div className="p-5 border-b">
-            <h2 className="text-lg font-semibold text-foreground">
-              Recent Subscribers {subscribers.length > 0 && `(${subscribers.length})`}
-            </h2>
-          </div>
-          {subscribers.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              No subscribers yet. Share the link to start getting members!
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Email</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell">Mobile</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell">Plan</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell">Status</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Date</th>
+          <table className="w-full text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="p-3 text-left">Name</th>
+                <th className="p-3 text-left">Email</th>
+                <th className="p-3 text-left">Plan</th>
+                <th className="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {subscribers.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center p-6 text-muted-foreground">
+                    No pending requests 🎉
+                  </td>
+                </tr>
+              ) : (
+                subscribers.map((s) => (
+                  <tr key={s.id} className="border-t">
+                    <td className="p-3">{s.name}</td>
+                    <td className="p-3">{s.email}</td>
+                    <td className="p-3 capitalize">{s.plan}</td>
+
+                    <td className="p-3 text-center space-x-2">
+                      <Button
+                        onClick={() => updateStatus(s, "approved")}
+                        className="bg-green-500 hover:bg-green-600"
+                      >
+                        Approve
+                      </Button>
+
+                      <Button
+                        onClick={() => updateStatus(s, "rejected")}
+                        variant="destructive"
+                      >
+                        Reject
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((s) => (
-                    <tr key={s.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
-                      <td className="p-3 font-medium text-foreground">{s.name}</td>
-                      <td className="p-3 text-muted-foreground">{s.email}</td>
-                      <td className="p-3 text-muted-foreground hidden md:table-cell">{s.mobile}</td>
-                      <td className="p-3 text-muted-foreground hidden lg:table-cell capitalize">{s.plan}</td>
-                      <td className="p-3 hidden lg:table-cell">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          s.status === "approved" ? "bg-success/10 text-success" :
-                          s.status === "rejected" ? "bg-destructive/10 text-destructive" :
-                          "bg-accent/10 text-accent"
-                        }`}>
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-muted-foreground">
-                        {new Date(s.subscribedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
+
         </div>
+
       </div>
     </div>
   );

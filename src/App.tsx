@@ -8,6 +8,9 @@ import Subscribe from "./pages/Subscribe.tsx";
 import Confirmation from "./pages/Confirmation.tsx";
 import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Pending from "./pages/Pending";
+import Payment from "./pages/Payment";
+
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,8 @@ const App = () => (
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/pending" element={<Pending />} />
+          <Route path="/payment" element={<Payment />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
