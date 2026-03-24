@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { addSubmission } from "@/lib/submissions";
-import { useToast } from "@/hooks/use-toast";
 
 interface FormData {
   name: string;
@@ -18,10 +16,6 @@ interface FormData {
 
 const Subscribe = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const plan = searchParams.get("plan") === "premium" ? "premium" : "basic";
-  const price = plan === "premium" ? 999 : 499;
-  const { toast } = useToast();
   const [form, setForm] = useState<FormData>({
     name: "", email: "", mobile: "", age: "", gender: "", address: "",
   });
@@ -52,40 +46,10 @@ const Subscribe = () => {
     if (!validate()) return;
 
     setProcessing(true);
-    try {
-      const docId = await addSubmission({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        mobile: form.mobile.trim(),
-        age: Number(form.age),
-        gender: form.gender,
-        address: form.address.trim(),
-        plan,
-      });
+    await new Promise((r) => setTimeout(r, 2000));
+    setProcessing(false);
 
-      // Simulate payment delay
-      await new Promise((r) => setTimeout(r, 1500));
-
-      navigate("/confirmation", {
-        state: {
-          subscriber: {
-            ...form,
-            plan,
-            id: docId,
-            subscribedAt: new Date().toISOString(),
-          },
-        },
-      });
-    } catch (err) {
-      console.error("Submission error:", err);
-      toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setProcessing(false);
-    }
+    navigate("/confirmation", { state: { subscriber: { ...form, id: "BAN_" + Date.now(), subscribedAt: new Date().toISOString() } } });
   };
 
   return (
@@ -105,7 +69,7 @@ const Subscribe = () => {
       <div className="max-w-lg mx-auto px-6 py-12">
         <div className="fade-up mb-8">
           <h1 className="text-2xl font-bold text-foreground mb-2">Complete your membership</h1>
-          <p className="text-muted-foreground">Fill in your details below. One-time fee: <span className="font-semibold text-foreground">₹{price}</span> ({plan === "premium" ? "Premium" : "Basic"})</p>
+          <p className="text-muted-foreground">Fill in your details below. One-time fee: <span className="font-semibold text-foreground">₹499</span></p>
         </div>
 
         <form onSubmit={handleSubmit} className="fade-up fade-up-delay-1 space-y-5">
@@ -185,7 +149,7 @@ const Subscribe = () => {
           <div className="pt-4 border-t">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-muted-foreground">Membership Fee</span>
-              <span className="font-semibold text-foreground">₹{price}</span>
+              <span className="font-semibold text-foreground">₹499</span>
             </div>
             <Button variant="hero" size="lg" type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
               {processing ? (
@@ -194,7 +158,7 @@ const Subscribe = () => {
                   Processing Payment...
                 </>
               ) : (
-                `Pay ₹${price} & Join`
+                "Pay ₹499 & Join"
               )}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-3">
