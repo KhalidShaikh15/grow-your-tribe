@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import banbrossLogo from "@/assets/banbross_logo.png";
 
 interface FormData {
   name: string;
@@ -16,6 +19,10 @@ interface FormData {
 
 const Subscribe = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const plan = searchParams.get("plan") === "premium" ? "premium" : "basic";
+  const price = plan === "premium" ? 999 : 499;
+
   const [form, setForm] = useState<FormData>({
     name: "", email: "", mobile: "", age: "", gender: "", address: "",
   });
@@ -46,10 +53,39 @@ const Subscribe = () => {
     if (!validate()) return;
 
     setProcessing(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setProcessing(false);
+    try {
+      const docRef = await addDoc(collection(db, "subscribers"), {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        mobile: form.mobile.trim(),
+        age: Number(form.age),
+        gender: form.gender,
+        address: form.address.trim(),
+        plan,
+        amount: price,
+        status: "pending",
+        subscribedAt: serverTimestamp(),
+      });
 
-    navigate("/confirmation", { state: { subscriber: { ...form, id: "BAN_" + Date.now(), subscribedAt: new Date().toISOString() } } });
+      // Simulate payment delay
+      await new Promise((r) => setTimeout(r, 1500));
+
+      navigate("/confirmation", {
+        state: {
+          subscriber: {
+            ...form,
+            id: docRef.id,
+            plan,
+            amount: price,
+            subscribedAt: new Date().toISOString(),
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Error saving subscriber:", err);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -59,9 +95,7 @@ const Subscribe = () => {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">B</span>
-          </div>
+          <img src={banbrossLogo} alt="BANBRO'SS INDIA" className="w-7 h-7 object-contain" />
           <span className="font-bold text-lg text-foreground">Join BANBRO'SS INDIA</span>
         </div>
       </nav>
@@ -69,7 +103,9 @@ const Subscribe = () => {
       <div className="max-w-lg mx-auto px-6 py-12">
         <div className="fade-up mb-8">
           <h1 className="text-2xl font-bold text-foreground mb-2">Complete your membership</h1>
-          <p className="text-muted-foreground">Fill in your details below. One-time fee: <span className="font-semibold text-foreground">₹499</span></p>
+          <p className="text-muted-foreground">
+            {plan === "premium" ? "Premium" : "Basic"} Membership — One-time fee: <span className="font-semibold text-foreground">₹{price}</span>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="fade-up fade-up-delay-1 space-y-5">
@@ -127,7 +163,6 @@ const Subscribe = () => {
             {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
           </div>
 
-          {/* Terms checkbox */}
           <div className="bg-secondary/50 rounded-xl p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -149,7 +184,7 @@ const Subscribe = () => {
           <div className="pt-4 border-t">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-muted-foreground">Membership Fee</span>
-              <span className="font-semibold text-foreground">₹499</span>
+              <span className="font-semibold text-foreground">₹{price}</span>
             </div>
             <Button variant="hero" size="lg" type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
               {processing ? (
@@ -158,7 +193,7 @@ const Subscribe = () => {
                   Processing Payment...
                 </>
               ) : (
-                "Pay ₹499 & Join"
+                `Pay ₹${price} & Join`
               )}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-3">
