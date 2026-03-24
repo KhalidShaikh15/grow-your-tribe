@@ -9,6 +9,9 @@ const Confirmation = () => {
 
   if (!subscriber) return <Navigate to="/" replace />;
 
+  const price = subscriber.amount || (subscriber.plan === "premium" ? 999 : 499);
+  const planLabel = subscriber.plan === "premium" ? "Premium" : "Basic";
+
   const downloadReceipt = () => {
     const doc = new jsPDF();
     const date = new Date(subscriber.subscribedAt).toLocaleDateString("en-IN", {
@@ -37,6 +40,7 @@ const Confirmation = () => {
       ["Age", subscriber.age],
       ["Gender", subscriber.gender],
       ["Address", subscriber.address],
+      ["Plan", planLabel + " Membership"],
     ];
 
     let y = 50;
@@ -53,7 +57,7 @@ const Confirmation = () => {
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text("Amount Paid", 20, y);
-    doc.text("\u20B9499", 170, y, { align: "right" });
+    doc.text(`\u20B9${price}`, 170, y, { align: "right" });
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
@@ -76,7 +80,7 @@ const Confirmation = () => {
           Welcome to BANBRO'SS INDIA!
         </h1>
         <p className="text-muted-foreground mb-8">
-          Congratulations, {subscriber.name.split(" ")[0]}! Your membership is confirmed.
+          Congratulations, {subscriber.name.split(" ")[0]}! Your {planLabel} membership is confirmed.
         </p>
 
         <div className="bg-card border rounded-xl p-5 mb-8 text-left space-y-2">
@@ -85,8 +89,12 @@ const Confirmation = () => {
             <span className="font-mono text-foreground text-xs">{subscriber.id}</span>
           </div>
           <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Plan</span>
+            <span className="text-foreground">{planLabel} Membership</span>
+          </div>
+          <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Amount</span>
-            <span className="font-semibold text-foreground">₹499</span>
+            <span className="font-semibold text-foreground">₹{price}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Email</span>

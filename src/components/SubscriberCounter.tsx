@@ -1,12 +1,27 @@
 import { useEffect, useState } from "react";
-import { SUBSCRIBER_GOAL, CURRENT_SUBSCRIBERS, formatIndianNumber } from "@/lib/mockData";
+import { collection, getCountFromServer } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { SUBSCRIBER_GOAL, formatIndianNumber } from "@/lib/mockData";
 
 export function SubscriberCounter() {
   const [count, setCount] = useState(0);
+  const [target, setTarget] = useState(0);
   const percentage = Math.min((count / SUBSCRIBER_GOAL) * 100, 100);
 
   useEffect(() => {
-    const target = CURRENT_SUBSCRIBERS;
+    async function fetchCount() {
+      try {
+        const snapshot = await getCountFromServer(collection(db, "subscribers"));
+        setTarget(snapshot.data().count);
+      } catch {
+        setTarget(0);
+      }
+    }
+    fetchCount();
+  }, []);
+
+  useEffect(() => {
+    if (target === 0) return;
     const duration = 2000;
     const steps = 60;
     let step = 0;
@@ -24,7 +39,7 @@ export function SubscriberCounter() {
     }, duration / steps);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [target]);
 
   return (
     <div className="fade-up w-full max-w-xl mx-auto">

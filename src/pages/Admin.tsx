@@ -1,17 +1,85 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Users, TrendingUp, Calendar } from "lucide-react";
-import {
-  CURRENT_SUBSCRIBERS, SUBSCRIBER_GOAL, mockSubscribers, dailyGrowth, formatIndianNumber,
-} from "@/lib/mockData";
+import { ArrowLeft, Users, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { collection, getDocs, query, orderBy, getCountFromServer } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { SUBSCRIBER_GOAL, formatIndianNumber, type Subscriber } from "@/lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const stats = [
-  { label: "Total Subscribers", value: formatIndianNumber(CURRENT_SUBSCRIBERS), icon: Users, change: "+4,231 this week" },
-  { label: "Goal Progress", value: ((CURRENT_SUBSCRIBERS / SUBSCRIBER_GOAL) * 100).toFixed(1) + "%", icon: TrendingUp, change: `${formatIndianNumber(SUBSCRIBER_GOAL - CURRENT_SUBSCRIBERS)} remaining` },
-  { label: "Avg. Daily Signups", value: formatIndianNumber(Math.round(dailyGrowth.reduce((a, b) => a + b.subscribers, 0) / dailyGrowth.length)), icon: Calendar, change: "Last 30 days" },
-];
-
 const Admin = () => {
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [countSnap, docsSnap] = await Promise.all([
+          getCountFromServer(collection(db, "subscribers")),
+          getDocs(query(collection(db, "subscribers"), orderBy("subscribedAt", "desc"))),
+        ]);
+
+        setTotalCount(countSnap.data().count);
+
+        const subs: Subscriber[] = docsSnap.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            name: d.name || "",
+            email: d.email || "",
+            mobile: d.mobile || "",
+            age: d.age || 0,
+            gender: d.gender || "",
+            address: d.address || "",
+            plan: d.plan || "basic",
+            amount: d.amount || 499,
+            subscribedAt: d.subscribedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            status: d.status || "pending",
+          };
+        });
+        setSubscribers(subs);
+      } catch (err) {
+        console.error("Error fetching subscribers:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Build daily growth from actual data
+  const dailyGrowth = (() => {
+    const map: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const key = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+      map[key] = 0;
+    }
+    subscribers.forEach((s) => {
+      const key = new Date(s.subscribedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+      if (key in map) map[key]++;
+    });
+    return Object.entries(map).map(([date, subscribers]) => ({ date, subscribers }));
+  })();
+
+  const avgDaily = dailyGrowth.length
+    ? Math.round(dailyGrowth.reduce((a, b) => a + b.subscribers, 0) / dailyGrowth.length)
+    : 0;
+
+  const stats = [
+    { label: "Total Subscribers", value: formatIndianNumber(totalCount), icon: Users, change: `${subscribers.length} loaded` },
+    { label: "Goal Progress", value: ((totalCount / SUBSCRIBER_GOAL) * 100).toFixed(1) + "%", icon: TrendingUp, change: `${formatIndianNumber(SUBSCRIBER_GOAL - totalCount)} remaining` },
+    { label: "Avg. Daily Signups", value: formatIndianNumber(avgDaily), icon: Calendar, change: "Last 30 days" },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="flex items-center gap-4 px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
@@ -64,36 +132,52 @@ const Admin = () => {
         {/* Table */}
         <div className="fade-up bg-card border rounded-xl overflow-hidden">
           <div className="p-5 border-b">
-            <h2 className="text-lg font-semibold text-foreground">Recent Subscribers</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              Recent Subscribers {subscribers.length > 0 && `(${subscribers.length})`}
+            </h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell">Mobile</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell">Gender</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockSubscribers
-                  .sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime())
-                  .map((s) => (
+          {subscribers.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground">
+              No subscribers yet. Share the link to start getting members!
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">Email</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell">Mobile</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell">Plan</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell">Status</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscribers.map((s) => (
                     <tr key={s.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                       <td className="p-3 font-medium text-foreground">{s.name}</td>
                       <td className="p-3 text-muted-foreground">{s.email}</td>
                       <td className="p-3 text-muted-foreground hidden md:table-cell">{s.mobile}</td>
-                      <td className="p-3 text-muted-foreground hidden lg:table-cell">{s.gender}</td>
+                      <td className="p-3 text-muted-foreground hidden lg:table-cell capitalize">{s.plan}</td>
+                      <td className="p-3 hidden lg:table-cell">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          s.status === "approved" ? "bg-success/10 text-success" :
+                          s.status === "rejected" ? "bg-destructive/10 text-destructive" :
+                          "bg-accent/10 text-accent"
+                        }`}>
+                          {s.status}
+                        </span>
+                      </td>
                       <td className="p-3 text-muted-foreground">
                         {new Date(s.subscribedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                       </td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
