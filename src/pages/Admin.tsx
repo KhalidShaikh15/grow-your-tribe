@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { db } from "@/lib/firebase";
 import {
   collection,
@@ -10,11 +10,26 @@ import {
   doc,
 } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const Admin = () => {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
+
+  // 🔐 AUTH PROTECTION
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/admin-login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // ✅ FETCH PENDING USERS
   useEffect(() => {
@@ -53,13 +68,9 @@ const Admin = () => {
   const approved = allUsers.filter((u) => u.status === "approved").length;
   const pending = allUsers.filter((u) => u.status === "pending").length;
 
-  const basicPlan = allUsers.filter((u) => u.plan === "basic").length;
-  const premiumPlan = allUsers.filter((u) => u.plan === "premium").length;
-
-  // ✅ TOTAL REVENUE
   const totalRevenue = allUsers
-  .filter((u) => u.status === "approved")
-  .reduce((sum, u) => sum + (u.amount || 0), 0);
+    .filter((u) => u.status === "approved")
+    .reduce((sum, u) => sum + (u.amount || 0), 0);
 
   // ✅ UPDATE STATUS
   const updateStatus = async (user: any, status: string) => {
@@ -100,44 +111,59 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background px-6 py-10">
-
       <div className="max-w-6xl mx-auto">
 
-        <h1 className="text-3xl font-bold mb-8 text-center">
-          Admin Dashboard
-        </h1>
-        {/* ✅ ADD BUTTON HERE */}
-<div className="flex justify-end mb-4">
-  <Link to="/admin/users">
-    <button className="px-4 py-2 bg-primary text-white rounded-xl">
-      View Approved Users
-    </button>
-  </Link>
+        {/* 🔥 HEADER WITH LOGOUT */}
+        <div className="flex items-center justify-between mb-8">
+
+  {/* Left Spacer */}
+  <div className="w-[80px]"></div>
+
+  {/* Center Title */}
+  <h1 className="text-3xl font-bold text-center">
+    Admin Dashboard
+  </h1>
+
+  {/* Right Logout */}
+  <button
+    onClick={() => {
+      signOut(auth);
+      navigate("/admin-login");
+    }}
+    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm transition"
+  >
+    Logout
+  </button>
+
 </div>
 
-{/* STATS */}
-<div className="max-w-5xl mx-auto"></div>
-        {/* 🔥 STATS CARDS */}
+        {/* VIEW APPROVED USERS */}
+        <div className="flex justify-end mb-4">
+          <Link to="/admin/users">
+            <button className="px-4 py-2 bg-primary text-white rounded-xl">
+              View Approved Users
+            </button>
+          </Link>
+        </div>
+
+        {/* 🔥 STATS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
 
-          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition-all duration-300" >
+          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition">
             <p className="text-sm text-muted-foreground">Total Users</p>
             <p className="text-2xl font-bold">{totalUsers}</p>
           </div>
 
-          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition-all duration-300" >
+          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition">
             <p className="text-sm text-muted-foreground">Approved</p>
             <p className="text-2xl font-bold text-green-600">{approved}</p>
           </div>
 
-          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition-all duration-300" >
+          <div className="p-6 bg-card border rounded-2xl text-center shadow-sm hover:shadow-xl transition">
             <p className="text-sm text-muted-foreground">Pending</p>
             <p className="text-2xl font-bold text-yellow-600">{pending}</p>
           </div>
 
-         
-
-          {/* 💰 TOTAL REVENUE */}
           <div className="p-5 bg-primary/10 border border-primary rounded-2xl text-center shadow-sm">
             <p className="text-sm text-muted-foreground">Total Revenue</p>
             <p className="text-2xl font-bold text-primary">
@@ -149,7 +175,7 @@ const Admin = () => {
 
         {/* 🔥 TABLE */}
         <div className="overflow-x-auto">
-  <table className="w-full text-sm">
+          <table className="w-full text-sm">
 
             <thead className="bg-muted">
               <tr>
@@ -203,7 +229,6 @@ const Admin = () => {
             </tbody>
 
           </table>
-
         </div>
 
       </div>

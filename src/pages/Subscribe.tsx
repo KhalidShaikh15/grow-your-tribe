@@ -85,23 +85,15 @@ const Subscribe = () => {
 
         plan,
         quantity,
-        amount,
+        amount: Number(amount),
 
         status: "pending",
         createdAt: serverTimestamp(),
       });
 
       navigate("/payment", {
-        state: {
-          subscriber: {
-            ...form,
-            id: docRef.id,
-            plan,
-            quantity,
-            amount,
-          },
-        },
-      });
+  state: { plan, quantity }
+});
 
     } catch (err) {
       console.error("Error:", err);

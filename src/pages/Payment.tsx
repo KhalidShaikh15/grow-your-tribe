@@ -8,11 +8,12 @@ const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const subscriber = location.state?.subscriber;
+  const subscriber = location.state || {};
 
-  const plan = subscriber?.plan || "basic";
+  const plan = subscriber.plan || "basic";
   const quantity = subscriber?.quantity || 1;
-  const amount = subscriber?.amount || 499;
+  const price = plan === "premium" ? 999 : 499;
+  const amount = price * quantity;
 
   // ✅ MOBILE DETECTION
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
