@@ -19,7 +19,11 @@ const Payment = () => {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // ✅ UPI LINK
-  const upiLink = `upi://pay?pa=yourupi@bank&pn=Hariom Shukla&am=${amount}&cu=INR`;
+  // Force the amount to 2 decimal places as a string
+  const formattedAmount = Number(amount).toFixed(2);
+
+  const upiLink = `upi://pay?pa=hariomshukla7111-2@okhdfcbank&pn=SACHIDANAND%20RAJESH%20SHUKLA&am=${formattedAmount}&cu=INR`;
+
 
   const handleDone = () => {
     navigate("/pending");
