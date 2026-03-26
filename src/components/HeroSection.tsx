@@ -41,14 +41,6 @@ export function HeroSection({ count }: { count: number }) {
           </h2>
         </div>
 
-        {/* ✅ PROGRESS BAR */}
-        <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-3 mb-10">
-          <div
-            className="bg-blue-500 h-3 rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
         <Button size="lg" className="h-14 px-10 rounded-2xl" asChild>
           <Link to="/subscribe">
             Join Now for ₹499

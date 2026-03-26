@@ -10,6 +10,8 @@ import Admin from "./pages/Admin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Pending from "./pages/Pending";
 import Payment from "./pages/Payment";
+import SelectPlan from "./pages/SelectPlan";
+import AdminUsers from "./pages/AdminUsers";  
 
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
           <Route path="/pending" element={<Pending />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/select-plan" element={<SelectPlan />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

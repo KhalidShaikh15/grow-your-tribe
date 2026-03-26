@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,6 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import banbrossLogo from "@/assets/banbross_logo.png";
 import PageWrapper from "@/components/PageWrapper";
-
 
 interface FormData {
   name: string;
@@ -21,9 +20,19 @@ interface FormData {
 
 const Subscribe = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const plan = searchParams.get("plan") === "premium" ? "premium" : "basic";
-  const price = plan === "premium" ? 999 : 499;
+  const location = useLocation();
+
+  // ✅ GET DATA FROM SELECT PAGE
+  const plan = location.state?.plan;
+  const quantity = location.state?.quantity;
+  const amount = location.state?.amount;
+
+  // ✅ PROTECT FLOW (IMPORTANT)
+  useEffect(() => {
+    if (!plan || !quantity || !amount) {
+      navigate("/select-plan");
+    }
+  }, [plan, quantity, amount, navigate]);
 
   const [form, setForm] = useState<FormData>({
     name: "",
@@ -52,7 +61,7 @@ const Subscribe = () => {
     if (!form.age || +form.age < 13 || +form.age > 120) e.age = "Valid age required";
     if (!form.gender) e.gender = "Select gender";
     if (!form.address.trim()) e.address = "Address required";
-    if (!termsAccepted) e.terms = "You must accept the terms and conditions";
+    if (!termsAccepted) e.terms = "You must accept the terms";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -73,165 +82,141 @@ const Subscribe = () => {
         age: Number(form.age),
         gender: form.gender,
         address: form.address.trim(),
+
         plan,
-        amount: price,
+        quantity,
+        amount,
+
         status: "pending",
         createdAt: serverTimestamp(),
       });
 
-
       navigate("/payment", {
-  state: {
-    subscriber: {
-      ...form,
-      id: docRef.id,
-      plan,
-      amount: price,
-    },
-  },
-});
+        state: {
+          subscriber: {
+            ...form,
+            id: docRef.id,
+            plan,
+            quantity,
+            amount,
+          },
+        },
+      });
+
     } catch (err) {
-      console.error("Error saving subscriber:", err);
-      alert("Something went wrong. Please try again.");
+      console.error("Error:", err);
+      alert("Something went wrong");
     } finally {
       setProcessing(false);
     }
   };
 
   return (
-     <PageWrapper>
-      <nav className="flex items-center gap-4 px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
-        <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+    <PageWrapper>
+
+      {/* NAV */}
+      <nav className="flex items-center gap-4 px-6 md:px-12 py-4 border-b bg-card/80 backdrop-blur-sm">
+        <Link to="/select-plan" className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-2">
-          <img src={banbrossLogo} alt="BANBRO'S INDIA" className="w-7 h-7 object-contain" />
-          <span className="font-bold text-lg text-foreground">Join BANBRO'S INDIA</span>
+          <img src={banbrossLogo} className="w-7 h-7" />
+          <span className="font-bold text-lg">BANBRO'SS INDIA</span>
         </div>
       </nav>
 
       <div className="max-w-lg mx-auto px-6 py-12">
-        <div className="fade-up mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Complete your membership</h1>
-          <p className="text-muted-foreground">
-            {plan === "premium" ? "Premium" : "Basic"} Membership — One-time fee:{" "}
-            <span className="font-semibold text-foreground">₹{price}</span>
-          </p>
+
+        {/* HEADER */}
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold mb-2">Complete your membership</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="fade-up fade-up-delay-1 space-y-5">
+       
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+
           <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              
-              className="mt-1.5"
-            />
-            {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+            <Label>Full Name</Label>
+            <Input value={form.name} onChange={(e) => update("name", e.target.value)} />
+            {errors.name && <p className="text-destructive text-xs">{errors.name}</p>}
           </div>
 
           <div>
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              
-              className="mt-1.5"
-            />
-            {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
+            <Label>Email</Label>
+            <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+            {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
           </div>
 
           <div>
-            <Label htmlFor="mobile">Mobile Number</Label>
-            <Input
-              id="mobile"
-              value={form.mobile}
-              onChange={(e) => update("mobile", e.target.value)}
-              className="mt-1.5"
-            />
-            {errors.mobile && <p className="text-destructive text-xs mt-1">{errors.mobile}</p>}
+            <Label>Mobile</Label>
+            <Input value={form.mobile} onChange={(e) => update("mobile", e.target.value)} />
+            {errors.mobile && <p className="text-destructive text-xs">{errors.mobile}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
-                value={form.age}
-                onChange={(e) => update("age", e.target.value)}
-                
-                className="mt-1.5"
-              />
-              {errors.age && <p className="text-destructive text-xs mt-1">{errors.age}</p>}
+              <Label>Age</Label>
+              <Input type="number" value={form.age} onChange={(e) => update("age", e.target.value)} />
+              {errors.age && <p className="text-destructive text-xs">{errors.age}</p>}
             </div>
 
             <div>
-              <Label htmlFor="gender">Gender</Label>
+              <Label>Gender</Label>
               <select
-                id="gender"
                 value={form.gender}
                 onChange={(e) => update("gender", e.target.value)}
-                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full h-10 border rounded-md px-2"
               >
                 <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
               </select>
-              {errors.gender && <p className="text-destructive text-xs mt-1">{errors.gender}</p>}
+              {errors.gender && <p className="text-destructive text-xs">{errors.gender}</p>}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="address">Address</Label>
+            <Label>Address</Label>
             <textarea
-              id="address"
               value={form.address}
               onChange={(e) => update("address", e.target.value)}
-              placeholder="123, Sector 15, Mumbai"
-              rows={3}
-              className="mt-1.5 w-full rounded-md border border-input px-3 py-2 text-sm resize-none"
+              className="w-full border rounded-md px-2 py-2"
             />
-            {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
+            {errors.address && <p className="text-destructive text-xs">{errors.address}</p>}
           </div>
 
-          <div className="bg-secondary/50 rounded-xl p-4">
-            <label className="flex items-start gap-3 cursor-pointer">
+          <div className="bg-secondary/50 p-4 rounded-xl">
+            <label className="flex gap-2">
               <input
                 type="checkbox"
                 checked={termsAccepted}
-                onChange={(e) => {
-                  setTermsAccepted(e.target.checked);
-                  if (errors.terms) setErrors((p) => ({ ...p, terms: undefined }));
-                }}
-                className="mt-1 h-4 w-4"
+                onChange={(e) => setTermsAccepted(e.target.checked)}
               />
-              <span className="text-sm text-muted-foreground">
-                I accept the Terms and Conditions. No guaranteed returns. Long-term program (5–7 years).
+              <span className="text-sm">
+                I accept Terms & Conditions. No guaranteed returns.
               </span>
             </label>
-            {errors.terms && <p className="text-destructive text-xs mt-2 ml-7">{errors.terms}</p>}
+            {errors.terms && <p className="text-destructive text-xs">{errors.terms}</p>}
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-xl" disabled={processing}>
+          <Button type="submit" className="w-full h-12" disabled={processing}>
             {processing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Submitting...
+                Processing...
               </>
             ) : (
-              `Join for ₹${price}`
+              `Proceed to Payment ₹${amount}`
             )}
           </Button>
+
         </form>
       </div>
-   </PageWrapper>
-    
+
+    </PageWrapper>
   );
 };
 
